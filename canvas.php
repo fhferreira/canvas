@@ -178,8 +178,8 @@ class canvas {
       **/
      public function novaImagem( $largura, $altura )
      {
-          $this->largura     = $largura;
-          $this->altura     = $altura;
+          $this->largura = $largura;
+          $this->altura = $altura;
           $this->img = imagecreatetruecolor( $this->largura, $this->altura );
           $cor_fundo = imagecolorallocate( $this->img, $this->rgb[0], $this->rgb[1], $this->rgb[2] );
           imagefill( $this->img, 0, 0, $cor_fundo );
@@ -285,11 +285,16 @@ class canvas {
      /**
       * Armazena posições x e y para crop
       * @param Array valores x e y
+	  * @param Array valores w e h - width e height, se crop for posicionado manualmente (by OctaAugusto)
       * @return Object instância atual do objeto, para métodos encadeados
       **/
-     public function posicaoCrop( $x, $y )
+     public function posicaoCrop( $x, $y, $w=0, $h=0 )
      {
-          $this->posicao_crop = array( $x, $y, $this->largura, $this->altura );
+          // se tiver altura e largura nao original
+		  if(!$w) $w = $this->largura;
+		  if(!$h) $h = $this->altura;
+		  
+          $this->posicao_crop = array( $x, $y, $w, $h );
           return $this;
      } // fim posicao_crop
 
@@ -502,8 +507,17 @@ class canvas {
       **/
      private function redimensionaCrop()
      {
-          // calcula posicionamento do crop
-          $this->calculaPosicaoCrop();
+          	
+          // calcula posicionamento do crop automaticamente
+          if(!is_array($this->posicao_crop))
+          {
+          	$auto=1; 
+          	$this->calculaPosicaoCrop(); 
+		  }
+		  // posicionamento do crop setado manualmente
+		  else {
+		  	$auto = 0;
+		  }
 
           // cria imagem de destino temporária
           $this->img_temp = imagecreatetruecolor( $this->nova_largura, $this->nova_altura );
@@ -571,7 +585,8 @@ class canvas {
 	  $this->posicao_crop[ 0 ] = $this->pos_x;
 	  $this->posicao_crop[ 1 ] = $this->pos_y;
 
-          imagecopyresampled( $this->img_temp, $this->img, -$this->posicao_crop[0], -$this->posicao_crop[1], 0, 0, $this->posicao_crop[2], $this->posicao_crop[3], $this->largura, $this->altura );
+          if($auto) 	imagecopyresampled( $this->img_temp, $this->img, -$this->posicao_crop[0], -$this->posicao_crop[1], 0, 0, $this->posicao_crop[2], $this->posicao_crop[3], $this->largura, $this->altura );
+		  else 			imagecopyresampled( $this->img_temp, $this->img, 0, 0, $this->posicao_crop[0], $this->posicao_crop[1], $this->nova_largura, $this->nova_altura, $this->posicao_crop[2], $this->posicao_crop[3] );
 
           $this->img     = $this->img_temp;
      } // fim redimensionaCrop
